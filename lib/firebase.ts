@@ -1,11 +1,10 @@
-import { initializeApp, cert, getApps } from "firebase-admin/app";
-import { getFirestore as _getFirestore } from "firebase-admin/firestore";
-import type { Firestore } from "firebase-admin/firestore";
+let db: any = null;
 
-let db: Firestore | null = null;
-
-export function getFirestore(): Firestore {
+export async function getFirestore(): Promise<any> {
   if (db) return db;
+
+  const { initializeApp, cert, getApps } = await import("firebase-admin/app");
+  const { getFirestore: _getFirestore } = await import("firebase-admin/firestore");
 
   if (!getApps().length) {
     const projectId = process.env.FIREBASE_PROJECT_ID;
