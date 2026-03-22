@@ -1,4 +1,4 @@
-import { v4 as uuidv4 } from "uuid";
+import { randomUUID } from "crypto";
 import { getFirestore } from "./firebase";
 import type { Transaction, BudgetSettings } from "../shared/types";
 
@@ -49,7 +49,7 @@ export async function addTransaction(
   const now = new Date().toISOString();
   const tx: Transaction = {
     ...data,
-    id: uuidv4(),
+    id: randomUUID(),
     createdAt: now,
     updatedAt: now,
   };
