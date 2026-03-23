@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import PeptideCalculator from "../components/PeptideCalculator";
 import PlaidConnect from "../components/PlaidConnect";
+import StatementUpload from "../components/StatementUpload";
 import { format, startOfMonth, endOfMonth, isWithinInterval, parseISO, subMonths } from "date-fns";
 import type { Transaction, BudgetSettings } from "@shared/types";
 import { CATEGORIES, CATEGORY_ICONS, CATEGORY_COLORS } from "@shared/types";
@@ -323,6 +324,9 @@ export default function Budget() {
                 )}
               </div>
             </div>
+
+            {/* Statement upload */}
+            <StatementUpload onImport={load} defaultMode={area} />
 
             {/* Plaid connected accounts — personal only */}
             {area === "personal" && <PlaidConnect onSync={load} />}
