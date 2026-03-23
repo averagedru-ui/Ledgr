@@ -5,6 +5,89 @@ import { CATEGORIES, CATEGORY_ICONS } from "@shared/types";
 import type { Transaction } from "@shared/types";
 import * as api from "../lib/api";
 
+// ── PDF Parser (Cash App & generic) ─────────────────────────────────────────
+
+async function parsePDF(file: File): Promise<ParsedRow[]> {
+  const pdfjsLib = await import("pdfjs-dist");
+  pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+    "pdfjs-dist/build/pdf.worker.min.mjs",
+    import.meta.url
+  ).href;
+
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+  let fullText = "";
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    fullText += content.items.map((item: any) => item.str).join(" ") + "\n";
+  }
+
+  return parseCashAppText(fullText);
+}
+
+function parseCashAppText(text: string): ParsedRow[] {
+  const rows: ParsedRow[] = [];
+
+  // Cash App PDF pattern: date + type + name + amount on nearby lines
+  // Common patterns: "Jan 1, 2026" or "01/01/2026" or "2026-01-01"
+  const datePattern = /(\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+\d{1,2},?\s+\d{4}\b|\b\d{1,2}\/\d{1,2}\/\d{4}\b|\b\d{4}-\d{2}-\d{2}\b)/gi;
+  const amountPattern = /([+-]?\$[\d,]+\.?\d*|-?\$[\d,]+\.?\d*|\$[\d,]+\.?\d*)/g;
+
+  // Split into lines and try to find transaction blocks
+  const lines = text.split(/\n|\r/).map(l => l.trim()).filter(Boolean);
+
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
+
+    // Look for a date line
+    const dateMatch = line.match(datePattern);
+    if (dateMatch) {
+      const dateStr = dateMatch[0];
+
+      // Look ahead up to 5 lines for an amount
+      let amount = 0;
+      let description = "";
+      let foundAmount = false;
+
+      for (let j = i; j < Math.min(i + 6, lines.length); j++) {
+        const amtMatch = lines[j].match(/([+-]?\$[\d,]+\.?\d*)/);
+        if (amtMatch) {
+          const raw = amtMatch[1].replace(/[$,]/g, "");
+          amount = parseFloat(raw);
+          foundAmount = true;
+
+          // Description is whatever text was between date and amount
+          const descLines = lines.slice(i + 1, j)
+            .filter(l => !l.match(datePattern) && !l.match(/^\$/) && l.length > 1);
+          description = descLines.join(" ").trim() || lines[i + 1] || "Transaction";
+          break;
+        }
+      }
+
+      if (foundAmount && amount !== 0) {
+        rows.push({
+          date: parseDate(dateStr),
+          description: description.slice(0, 80),
+          amount,
+          type: amount >= 0 ? "income" : "expense",
+          category: guessCategory(description),
+          merchant: description.slice(0, 50),
+          selected: true,
+          raw: {},
+        });
+        i += 2;
+        continue;
+      }
+    }
+    i++;
+  }
+
+  return rows;
+}
+
 interface ParsedRow {
   date: string;
   description: string;
@@ -182,10 +265,27 @@ export default function StatementUpload({ onImport, defaultMode }: {
     });
   };
 
-  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    parseCSV(file, bankFormat);
+    setFileName(file.name);
+    setError(null);
+    setDone(false);
+
+    if (file.name.toLowerCase().endsWith(".pdf")) {
+      try {
+        const parsed = await parsePDF(file);
+        if (!parsed.length) {
+          setError("No transactions found in PDF. Try uploading a CSV export instead.");
+        } else {
+          setRows(parsed);
+        }
+      } catch (err: any) {
+        setError("Could not parse PDF: " + err.message);
+      }
+    } else {
+      parseCSV(file, bankFormat);
+    }
   };
 
   const toggleRow = (i: number) => {
@@ -281,7 +381,7 @@ export default function StatementUpload({ onImport, defaultMode }: {
             </div>
 
             <div style={{ flex: 2, minWidth: 200 }}>
-              <label style={{ fontSize: 11, color: "var(--text-muted)", display: "block", marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.06em" }}>CSV File</label>
+              <label style={{ fontSize: 11, color: "var(--text-muted)", display: "block", marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.06em" }}>CSV or PDF File</label>
               <div
                 onClick={() => fileRef.current?.click()}
                 style={{
@@ -292,17 +392,17 @@ export default function StatementUpload({ onImport, defaultMode }: {
                 }}
               >
                 <Upload size={14} />
-                {fileName || "Click to choose CSV file..."}
+                {fileName || "Click to choose CSV or PDF file..."}
               </div>
-              <input ref={fileRef} type="file" accept=".csv" onChange={handleFile} style={{ display: "none" }} />
+              <input ref={fileRef} type="file" accept=".csv,.pdf" onChange={handleFile} style={{ display: "none" }} />
             </div>
           </div>
 
           <p style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 4 }}>
-            💡 Most banks let you export transactions as CSV — look for "Download" or "Export" in your bank's transaction history.
+            💡 Supports CSV and PDF exports. Most banks offer CSV — look for "Download" or "Export" in your transaction history.
           </p>
           <p style={{ fontSize: 11, color: "var(--text-muted)" }}>
-            Cash App: Profile → Statements → Export CSV
+            Cash App PDF: Profile → Personal → Documents → Monthly Statements → Download
           </p>
         </>
       )}
