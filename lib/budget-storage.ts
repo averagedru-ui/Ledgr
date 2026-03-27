@@ -54,7 +54,9 @@ export async function addTransaction(
     createdAt: now,
     updatedAt: now,
   };
-  await db.collection(TRANSACTIONS_COL).doc(tx.id).set(tx);
+  // Firestore rejects undefined values — strip them before writing
+  const clean = Object.fromEntries(Object.entries(tx).filter(([, v]) => v !== undefined));
+  await db.collection(TRANSACTIONS_COL).doc(tx.id).set(clean);
   if (!skipBalanceUpdate) await recalcBalance();
   return tx;
 }
@@ -74,7 +76,8 @@ export async function updateTransaction(
     id,
     updatedAt: new Date().toISOString(),
   };
-  await ref.set(updated);
+  const clean = Object.fromEntries(Object.entries(updated).filter(([, v]) => v !== undefined));
+  await ref.set(clean);
   await recalcBalance();
   return updated;
 }
