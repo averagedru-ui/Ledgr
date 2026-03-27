@@ -43,7 +43,8 @@ export async function getTransactions(): Promise<Transaction[]> {
 }
 
 export async function addTransaction(
-  data: Omit<Transaction, "id" | "createdAt" | "updatedAt">
+  data: Omit<Transaction, "id" | "createdAt" | "updatedAt">,
+  skipBalanceUpdate = false
 ): Promise<Transaction> {
   const db = await getFirestore();
   const now = new Date().toISOString();
@@ -54,7 +55,7 @@ export async function addTransaction(
     updatedAt: now,
   };
   await db.collection(TRANSACTIONS_COL).doc(tx.id).set(tx);
-  await recalcBalance();
+  if (!skipBalanceUpdate) await recalcBalance();
   return tx;
 }
 

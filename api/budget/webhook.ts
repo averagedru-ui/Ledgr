@@ -23,14 +23,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  // Simple shared-secret auth
+  // Accept secret in body OR as X-Webhook-Secret header (n8n sends as header)
   const secret = process.env.WEBHOOK_SECRET;
-  if (secret && req.body.secret !== secret) {
+  const provided = req.body.secret || req.headers["x-webhook-secret"];
+  if (secret && provided !== secret) {
     return res.status(401).json({ error: "Unauthorized" });
   }
 
   try {
-    const { amount, description, merchant, date, type, category } = req.body;
+    const { amount, description, merchant, date, type, category, skipBalanceUpdate } = req.body;
 
     if (!amount || !description || !date || !type) {
       return res.status(400).json({ error: "Missing required fields" });
@@ -47,7 +48,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       type,
       source: "n8n",
       merchant,
-    });
+    }, skipBalanceUpdate === true);
 
     return res.status(201).json({ success: true, transaction: tx });
   } catch (err: any) {
