@@ -114,7 +114,22 @@ async function recalcBalance(): Promise<void> {
 
 export async function clearManualOverride(): Promise<BudgetSettings> {
   const db = await getFirestore();
-  await db.doc(SETTINGS_DOC).set({ manualOverride: false }, { merge: true });
+
+  // Get the current manually-set balance before clearing the override
+  const currentSettings = await getSettings();
+  const currentBalance = currentSettings.currentBalance ?? 0;
+
+  // Get net of all transactions so we can back-calculate the correct startingBalance
+  // This way recalcBalance() will still produce the same currentBalance after clearing override
+  const snap = await db.collection(TRANSACTIONS_COL).get();
+  const txs = snap.docs.map((d: any) => d.data() as Transaction);
+  const net = txs.reduce((sum: number, tx: Transaction) => sum + tx.amount, 0);
+  const impliedStarting = currentBalance - net;
+
+  await db.doc(SETTINGS_DOC).set(
+    { manualOverride: false, startingBalance: impliedStarting },
+    { merge: true }
+  );
   await recalcBalance();
   const doc = await db.doc(SETTINGS_DOC).get();
   return doc.data() as BudgetSettings;

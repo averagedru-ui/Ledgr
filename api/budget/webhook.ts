@@ -40,10 +40,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const resolvedCategory =
       category && CATEGORIES.includes(category) ? category : "Cash App";
 
+    // Enforce correct sign: expenses must be negative, income must be positive
+    const rawAmount = Math.abs(Number(amount));
+    const signedAmount = type === "expense" ? -rawAmount : rawAmount;
+
     const tx = await addTransaction({
       date: date || new Date().toISOString(),
       description,
-      amount: Number(amount),
+      amount: signedAmount,
       category: resolvedCategory,
       type,
       source: "n8n",
