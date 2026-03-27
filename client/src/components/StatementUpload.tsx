@@ -7,14 +7,27 @@ import * as api from "../lib/api";
 
 // ── PDF Parser (Cash App & generic) ─────────────────────────────────────────
 
-async function parsePDF(file: File): Promise<ParsedRow[]> {
-  // Destructure directly — pdfjs v5 dynamic imports don't expose on the namespace object
-  const { getDocument, GlobalWorkerOptions, version } = await import("pdfjs-dist");
-  GlobalWorkerOptions.workerSrc =
-    `https://unpkg.com/pdfjs-dist@${version}/build/pdf.worker.min.mjs`;
+const PDFJS_VERSION = "3.11.174";
+const PDFJS_CDN = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_VERSION}`;
 
+async function loadPdfJs(): Promise<any> {
+  if ((window as any).pdfjsLib) return (window as any).pdfjsLib;
+  await new Promise<void>((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = `${PDFJS_CDN}/pdf.min.js`;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error("Failed to load PDF.js"));
+    document.head.appendChild(script);
+  });
+  const lib = (window as any).pdfjsLib;
+  lib.GlobalWorkerOptions.workerSrc = `${PDFJS_CDN}/pdf.worker.min.js`;
+  return lib;
+}
+
+async function parsePDF(file: File): Promise<ParsedRow[]> {
+  const pdfjsLib = await loadPdfJs();
   const arrayBuffer = await file.arrayBuffer();
-  const pdf = await getDocument({ data: new Uint8Array(arrayBuffer) }).promise;
+  const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) }).promise;
 
   let fullText = "";
   for (let i = 1; i <= pdf.numPages; i++) {
