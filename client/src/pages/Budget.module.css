@@ -316,6 +316,68 @@
 }
 .warningBanner button:hover { background: #FCD34D; }
 
+/* ── Month bar (always visible) ─────────────────────────────────────────────── */
+.monthBar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 8px 12px;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  flex-wrap: wrap;
+}
+.monthBarBtn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  padding: 4px 6px;
+  border-radius: 6px;
+}
+.monthBarBtn:hover { background: #F0F0F0; color: var(--text-primary); }
+.monthBarLabel {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  min-width: 120px;
+  text-align: center;
+}
+.monthBarAll {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+  margin-left: 2px;
+}
+.monthBarAll:hover { background: #F0F0F0; color: var(--text-primary); }
+.monthBarViewToggle {
+  display: flex;
+  gap: 3px;
+  background: #F0F0F0;
+  border-radius: 8px;
+  padding: 3px;
+  margin-left: auto;
+}
+.monthBarViewBtn {
+  background: none;
+  border: none;
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  transition: all 0.15s;
+}
+.monthBarViewBtn:hover { color: var(--text-primary); }
+.monthBarViewBtnActive { background: var(--card-bg) !important; color: var(--accent) !important; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+
 /* ── Dashboard ──────────────────────────────────────────────────────────────── */
 .dashboard { display: flex; flex-direction: column; gap: 20px; }
 

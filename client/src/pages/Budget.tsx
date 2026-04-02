@@ -242,6 +242,18 @@ export default function Budget() {
           </div>
         )}
 
+        {/* Month nav bar — always visible (mobile + desktop) */}
+        <div className={styles.monthBar}>
+          <button className={styles.monthBarBtn} onClick={() => setSelectedMonth(m => subMonths(m, 1))}><ChevronLeft size={16} /></button>
+          <span className={styles.monthBarLabel}>{format(selectedMonth, "MMMM yyyy")}</span>
+          <button className={styles.monthBarBtn} onClick={() => setSelectedMonth(m => subMonths(m, -1))}><ChevronRight size={16} /></button>
+          <button className={styles.monthBarAll} onClick={() => setSelectedMonth(new Date())}>Today</button>
+          <div className={styles.monthBarViewToggle}>
+            <button className={`${styles.monthBarViewBtn} ${view === "dashboard" ? styles.monthBarViewBtnActive : ""}`} onClick={() => setView("dashboard")}>Overview</button>
+            <button className={`${styles.monthBarViewBtn} ${view === "transactions" ? styles.monthBarViewBtnActive : ""}`} onClick={() => setView("transactions")}>All Transactions</button>
+          </div>
+        </div>
+
         {view === "dashboard" && (
           <div className={styles.dashboard}>
             {/* Mobile balance card — hidden on desktop (sidebar shows it) */}
