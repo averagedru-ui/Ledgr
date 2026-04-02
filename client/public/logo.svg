@@ -1,17 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="500" height="500">
-  <!-- Outer badge shape -->
-  <rect x="20" y="140" width="460" height="220" rx="60" ry="60" fill="black"/>
-  <!-- Inner white fill -->
-  <rect x="38" y="158" width="424" height="184" rx="46" ry="46" fill="white"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 220" width="500" height="220">
+  <!-- Outer badge shape (white border) -->
+  <rect x="4" y="4" width="492" height="212" rx="56" ry="56" fill="white"/>
+  <!-- Inner cutout -->
+  <rect x="18" y="18" width="464" height="184" rx="44" ry="44" fill="#141414"/>
   <!-- LEDGR text -->
   <text
     x="250"
-    y="292"
+    y="116"
     font-family="Arial Black, Impact, sans-serif"
-    font-size="138"
+    font-size="130"
     font-weight="900"
     font-style="italic"
-    fill="black"
+    fill="white"
     text-anchor="middle"
     dominant-baseline="middle"
     letter-spacing="-2"
