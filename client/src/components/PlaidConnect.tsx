@@ -33,6 +33,7 @@ export default function PlaidConnect({ onSync }: { onSync?: () => void }) {
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [syncResult, setSyncResult] = useState<string | null>(null);
+  const [open2, setOpen2] = useState(false);
 
   const fetchAccounts = useCallback(async () => {
     try {
@@ -108,26 +109,32 @@ export default function PlaidConnect({ onSync }: { onSync?: () => void }) {
 
   return (
     <div className={styles.root}>
-      <div className={styles.header}>
+      <div className={styles.header} onClick={() => setOpen2(v => !v)} style={{ cursor: "pointer" }}>
         <div className={styles.headerLeft}>
           <Landmark size={16} />
           <span>Connected Accounts</span>
           {items.length > 0 && <span className={styles.badge}>{items.length}</span>}
+          {items.length === 0 && <span style={{ fontSize: 11, color: "var(--text-muted)", marginLeft: 4 }}>— tap to expand</span>}
         </div>
-        <div className={styles.headerActions}>
-          {items.length > 0 && (
+        <div className={styles.headerActions} onClick={e => e.stopPropagation()}>
+          {open2 && items.length > 0 && (
             <button className={styles.syncBtn} onClick={handleSync} disabled={syncing}>
               <RefreshCw size={13} className={syncing ? styles.spinning : ""} />
               {syncing ? "Syncing..." : "Sync Now"}
             </button>
           )}
-          <button className={styles.connectBtn} onClick={createLinkToken} disabled={loading}>
-            <Link2 size={13} />
-            {loading ? "Opening..." : "Connect Account"}
-          </button>
+          {open2 && (
+            <button className={styles.connectBtn} onClick={createLinkToken} disabled={loading}>
+              <Link2 size={13} />
+              {loading ? "Opening..." : "Connect Account"}
+            </button>
+          )}
+          <ChevronDown size={15} style={{ color: "var(--text-muted)", transform: open2 ? "rotate(180deg)" : "none", transition: "transform 0.2s", marginLeft: 4 }} />
         </div>
       </div>
 
+      {open2 && (
+        <>
       {error && <div className={styles.error}>{error} <button onClick={() => setError(null)}>✕</button></div>}
       {syncResult && <div className={styles.syncResult}>{syncResult}</div>}
 
@@ -184,6 +191,8 @@ export default function PlaidConnect({ onSync }: { onSync?: () => void }) {
             </div>
           ))}
         </div>
+      )}
+        </>
       )}
     </div>
   );
