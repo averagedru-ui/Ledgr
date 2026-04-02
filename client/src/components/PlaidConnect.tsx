@@ -33,7 +33,7 @@ export default function PlaidConnect({ onSync }: { onSync?: () => void }) {
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [syncResult, setSyncResult] = useState<string | null>(null);
-  const [open2, setOpen2] = useState(false);
+  const [open, setOpen] = useState(false);
 
   const fetchAccounts = useCallback(async () => {
     try {
@@ -70,7 +70,6 @@ export default function PlaidConnect({ onSync }: { onSync?: () => void }) {
       });
       setLinkToken(null);
       await fetchAccounts();
-      // Auto-sync after connecting
       handleSync();
     } catch (e: any) {
       setError(e.message);
@@ -79,11 +78,11 @@ export default function PlaidConnect({ onSync }: { onSync?: () => void }) {
     }
   }, [fetchAccounts]);
 
-  const { open, ready } = usePlaidLink({ token: linkToken || "", onSuccess });
+  const { open: openPlaid, ready } = usePlaidLink({ token: linkToken || "", onSuccess });
 
   useEffect(() => {
-    if (linkToken && ready) open();
-  }, [linkToken, ready, open]);
+    if (linkToken && ready) openPlaid();
+  }, [linkToken, ready, openPlaid]);
 
   const handleSync = async () => {
     setSyncing(true);
@@ -109,7 +108,7 @@ export default function PlaidConnect({ onSync }: { onSync?: () => void }) {
 
   return (
     <div className={styles.root}>
-      <div className={styles.header} onClick={() => setOpen2(v => !v)} style={{ cursor: "pointer" }}>
+      <div className={styles.header} onClick={() => setOpen(v => !v)} style={{ cursor: "pointer" }}>
         <div className={styles.headerLeft}>
           <Landmark size={16} />
           <span>Connected Accounts</span>
@@ -117,82 +116,102 @@ export default function PlaidConnect({ onSync }: { onSync?: () => void }) {
           {items.length === 0 && <span style={{ fontSize: 11, color: "var(--text-muted)", marginLeft: 4 }}>— tap to expand</span>}
         </div>
         <div className={styles.headerActions} onClick={e => e.stopPropagation()}>
-          {open2 && items.length > 0 && (
+          {open && items.length > 0 && (
             <button className={styles.syncBtn} onClick={handleSync} disabled={syncing}>
               <RefreshCw size={13} className={syncing ? styles.spinning : ""} />
               {syncing ? "Syncing..." : "Sync Now"}
             </button>
           )}
-          {open2 && (
+          {open && (
             <button className={styles.connectBtn} onClick={createLinkToken} disabled={loading}>
               <Link2 size={13} />
               {loading ? "Opening..." : "Connect Account"}
             </button>
           )}
-          <ChevronDown size={15} style={{ color: "var(--text-muted)", transform: open2 ? "rotate(180deg)" : "none", transition: "transform 0.2s", marginLeft: 4 }} />
+          <ChevronDown
+            size={15}
+            style={{
+              color: "var(--text-muted)",
+              transform: open ? "rotate(180deg)" : "none",
+              transition: "transform 0.2s",
+              marginLeft: 4,
+            }}
+          />
         </div>
       </div>
 
-      {open2 && (
-        <>
-      {error && <div className={styles.error}>{error} <button onClick={() => setError(null)}>✕</button></div>}
-      {syncResult && <div className={styles.syncResult}>{syncResult}</div>}
+      {open && (
+        <div>
+          {error && (
+            <div className={styles.error}>
+              {error} <button onClick={() => setError(null)}>✕</button>
+            </div>
+          )}
+          {syncResult && <div className={styles.syncResult}>{syncResult}</div>}
 
-      {items.length === 0 ? (
-        <div className={styles.empty}>
-          <Landmark size={28} style={{ opacity: 0.3 }} />
-          <p>No accounts connected yet</p>
-          <p className={styles.emptyHint}>Connect your bank account or Cash App to auto-import transactions</p>
-          <button className={styles.connectBtn} onClick={createLinkToken} disabled={loading}>
-            <Link2 size={13} /> Connect your first account
-          </button>
-        </div>
-      ) : (
-        <div className={styles.itemList}>
-          {items.map(item => (
-            <div key={item.item_id} className={styles.item}>
-              <div className={styles.itemHeader} onClick={() => setExpanded(e => e === item.item_id ? null : item.item_id)}>
-                <div className={styles.itemLeft}>
-                  <Landmark size={16} className={styles.bankIcon} />
-                  <div>
-                    <div className={styles.itemName}>{item.institution_name}</div>
-                    <div className={styles.itemSub}>{item.accounts.length} account{item.accounts.length !== 1 ? "s" : ""}</div>
-                  </div>
-                </div>
-                <div className={styles.itemRight}>
-                  <button className={styles.disconnectBtn} onClick={e => { e.stopPropagation(); handleDisconnect(item.item_id); }}>
-                    <Trash2 size={12} />
-                  </button>
-                  {expanded === item.item_id ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                </div>
-              </div>
-              {expanded === item.item_id && (
-                <div className={styles.accountList}>
-                  {item.error && <div className={styles.itemError}>{item.error}</div>}
-                  {item.accounts.map(acc => (
-                    <div key={acc.id} className={styles.account}>
-                      <div className={styles.accountLeft}>
-                        <AccountIcon type={acc.type} />
-                        <div>
-                          <div className={styles.accountName}>{acc.name}</div>
-                          <div className={styles.accountType}>{acc.subtype}</div>
+          {items.length === 0 ? (
+            <div className={styles.empty}>
+              <Landmark size={28} style={{ opacity: 0.3 }} />
+              <p>No accounts connected yet</p>
+              <p className={styles.emptyHint}>Connect your bank account or Cash App to auto-import transactions</p>
+              <button className={styles.connectBtn} onClick={createLinkToken} disabled={loading}>
+                <Link2 size={13} /> Connect your first account
+              </button>
+            </div>
+          ) : (
+            <div className={styles.itemList}>
+              {items.map(item => (
+                <div key={item.item_id} className={styles.item}>
+                  <div
+                    className={styles.itemHeader}
+                    onClick={() => setExpanded(e => e === item.item_id ? null : item.item_id)}
+                  >
+                    <div className={styles.itemLeft}>
+                      <Landmark size={16} className={styles.bankIcon} />
+                      <div>
+                        <div className={styles.itemName}>{item.institution_name}</div>
+                        <div className={styles.itemSub}>
+                          {item.accounts.length} account{item.accounts.length !== 1 ? "s" : ""}
                         </div>
                       </div>
-                      <div className={styles.accountRight}>
-                        <div className={styles.accountBalance}>{fmt(acc.balance)}</div>
-                        {acc.available !== null && acc.available !== acc.balance && (
-                          <div className={styles.accountAvailable}>avail. {fmt(acc.available)}</div>
-                        )}
-                      </div>
                     </div>
-                  ))}
+                    <div className={styles.itemRight}>
+                      <button
+                        className={styles.disconnectBtn}
+                        onClick={e => { e.stopPropagation(); handleDisconnect(item.item_id); }}
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                      {expanded === item.item_id ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                    </div>
+                  </div>
+                  {expanded === item.item_id && (
+                    <div className={styles.accountList}>
+                      {item.error && <div className={styles.itemError}>{item.error}</div>}
+                      {item.accounts.map(acc => (
+                        <div key={acc.id} className={styles.account}>
+                          <div className={styles.accountLeft}>
+                            <AccountIcon type={acc.type} />
+                            <div>
+                              <div className={styles.accountName}>{acc.name}</div>
+                              <div className={styles.accountType}>{acc.subtype}</div>
+                            </div>
+                          </div>
+                          <div className={styles.accountRight}>
+                            <div className={styles.accountBalance}>{fmt(acc.balance)}</div>
+                            {acc.available !== null && acc.available !== acc.balance && (
+                              <div className={styles.accountAvailable}>avail. {fmt(acc.available)}</div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              )}
+              ))}
             </div>
-          ))}
+          )}
         </div>
-      )}
-        </>
       )}
     </div>
   );
