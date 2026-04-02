@@ -35,6 +35,35 @@ export interface Bill {
   updatedAt: string;
 }
 
+export interface Debt {
+  id: string;
+  name: string;
+  type: "credit_card" | "personal_loan" | "student_loan" | "medical" | "family" | "other";
+  balance: number;          // current remaining balance
+  originalBalance: number;  // original amount when added
+  interestRate: number;     // APR % (e.g. 24.99)
+  minimumPayment: number;
+  dueDay?: number;
+  color: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const DEBT_TYPES: Record<Debt["type"], string> = {
+  credit_card:    "Credit Card",
+  personal_loan:  "Personal Loan",
+  student_loan:   "Student Loan",
+  medical:        "Medical",
+  family:         "Family / Friend",
+  other:          "Other",
+};
+
+export const DEBT_COLORS = [
+  "#ef4444", "#f97316", "#f59e0b", "#8b5cf6",
+  "#3b82f6", "#06b6d4", "#ec4899", "#64748b",
+];
+
 export const BILL_COLORS = [
   "#3b82f6", "#22c55e", "#ef4444", "#f59e0b",
   "#8b5cf6", "#ec4899", "#06b6d4", "#f97316",

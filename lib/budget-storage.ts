@@ -1,9 +1,10 @@
 import { randomUUID } from "crypto";
 import { getFirestore } from "./firebase";
-import type { Transaction, BudgetSettings } from "../shared/types";
+import type { Transaction, BudgetSettings, Debt } from "../shared/types";
 
 const SETTINGS_DOC = "budget/settings";
 const TRANSACTIONS_COL = "budget_transactions";
+const DEBTS_COL = "budget_debts";
 
 // ── Settings ──────────────────────────────────────────────────────────────────
 
@@ -150,4 +151,37 @@ export async function setManualBalance(amount: number): Promise<BudgetSettings> 
   );
   const doc = await db.doc(SETTINGS_DOC).get();
   return doc.data() as BudgetSettings;
+}
+
+// ── Debts ─────────────────────────────────────────────────────────────────────
+
+export async function getDebts(): Promise<Debt[]> {
+  const db = await getFirestore();
+  const snap = await db.collection(DEBTS_COL).orderBy("createdAt", "desc").get();
+  return snap.docs.map((d: any) => d.data() as Debt);
+}
+
+export async function addDebt(data: Omit<Debt, "id" | "createdAt" | "updatedAt">): Promise<Debt> {
+  const db = await getFirestore();
+  const now = new Date().toISOString();
+  const debt: Debt = { ...data, id: randomUUID(), createdAt: now, updatedAt: now };
+  const clean = Object.fromEntries(Object.entries(debt).filter(([, v]) => v !== undefined));
+  await db.collection(DEBTS_COL).doc(debt.id).set(clean);
+  return debt;
+}
+
+export async function updateDebt(id: string, updates: Partial<Debt>): Promise<Debt> {
+  const db = await getFirestore();
+  const ref = db.collection(DEBTS_COL).doc(id);
+  const doc = await ref.get();
+  if (!doc.exists) throw new Error(`Debt ${id} not found`);
+  const updated: Debt = { ...(doc.data() as Debt), ...updates, id, updatedAt: new Date().toISOString() };
+  const clean = Object.fromEntries(Object.entries(updated).filter(([, v]) => v !== undefined));
+  await ref.set(clean);
+  return updated;
+}
+
+export async function deleteDebt(id: string): Promise<void> {
+  const db = await getFirestore();
+  await db.collection(DEBTS_COL).doc(id).delete();
 }

@@ -1,4 +1,4 @@
-import type { Transaction, BudgetSettings, Bill } from "@shared/types";
+import type { Transaction, BudgetSettings, Bill, Debt } from "@shared/types";
 
 const BASE = import.meta.env.VITE_API_URL || "/api";
 
@@ -43,6 +43,15 @@ export const updateBill = (data: Partial<Bill> & { id: string }) =>
   req<Bill>("/budget/bills", { method: "PUT", body: JSON.stringify(data) });
 export const deleteBill = (id: string) =>
   req<{ success: boolean }>(`/budget/bills?id=${id}`, { method: "DELETE" });
+
+// Debts
+export const getDebts = () => req<Debt[]>("/budget/debts");
+export const createDebt = (data: Omit<Debt, "id" | "createdAt" | "updatedAt">) =>
+  req<Debt>("/budget/debts", { method: "POST", body: JSON.stringify(data) });
+export const updateDebt = (data: Partial<Debt> & { id: string }) =>
+  req<Debt>("/budget/debts", { method: "PUT", body: JSON.stringify(data) });
+export const deleteDebt = (id: string) =>
+  req<{ success: boolean }>(`/budget/debts?id=${id}`, { method: "DELETE" });
 
 // Settings
 export const getSettings = () => req<BudgetSettings>("/budget/settings");
