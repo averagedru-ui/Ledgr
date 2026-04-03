@@ -13,6 +13,7 @@ import PlaidConnect from "../components/PlaidConnect";
 import StatementUpload from "../components/StatementUpload";
 import Bills from "../components/Bills";
 import DebtTracker from "../components/DebtTracker";
+import Inventory from "../components/Inventory";
 import { format, startOfMonth, endOfMonth, isWithinInterval, parseISO, subMonths } from "date-fns";
 import type { Transaction, BudgetSettings } from "@shared/types";
 import { CATEGORIES, CATEGORY_ICONS, CATEGORY_COLORS } from "@shared/types";
@@ -38,7 +39,7 @@ export default function Budget() {
   });
   const [loading, setLoading] = useState(true);
   const [area, setArea] = useState<"personal" | "business">("personal");
-  const [view, setView] = useState<"dashboard" | "transactions" | "debt">("dashboard");
+  const [view, setView] = useState<"dashboard" | "transactions" | "debt" | "inventory">("dashboard");
   const [selectedMonth, setSelectedMonth] = useState(new Date());
   const [search, setSearch] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
@@ -148,7 +149,7 @@ export default function Budget() {
         <div className={styles.areaToggle}>
           <button
             className={`${styles.areaBtn} ${area === "personal" ? styles.areaBtnActive : ""}`}
-            onClick={() => { setArea("personal"); setView("dashboard"); }}
+            onClick={() => { setArea("personal"); setView(v => v === "inventory" ? "dashboard" : v); }}
           >
             <User size={14} /> Personal
           </button>
@@ -255,6 +256,9 @@ export default function Budget() {
             <button className={`${styles.monthBarViewBtn} ${view === "dashboard" ? styles.monthBarViewBtnActive : ""}`} onClick={() => setView("dashboard")}>Overview</button>
             <button className={`${styles.monthBarViewBtn} ${view === "transactions" ? styles.monthBarViewBtnActive : ""}`} onClick={() => setView("transactions")}>Transactions</button>
             <button className={`${styles.monthBarViewBtn} ${view === "debt" ? styles.monthBarViewBtnActive : ""}`} onClick={() => setView("debt")}>Debt</button>
+            {area === "business" && (
+              <button className={`${styles.monthBarViewBtn} ${view === "inventory" ? styles.monthBarViewBtnActive : ""}`} onClick={() => setView("inventory")}>Inventory</button>
+            )}
           </div>
         </div>
 
@@ -389,6 +393,7 @@ export default function Budget() {
         )}
 
         {view === "debt" && <DebtTracker />}
+        {view === "inventory" && area === "business" && <Inventory />}
 
         {view === "transactions" && (
           <div className={styles.txView}>

@@ -1,10 +1,11 @@
 import { randomUUID } from "crypto";
 import { getFirestore } from "./firebase";
-import type { Transaction, BudgetSettings, Debt } from "../shared/types";
+import type { Transaction, BudgetSettings, Debt, InventoryLot } from "../shared/types";
 
 const SETTINGS_DOC = "budget/settings";
 const TRANSACTIONS_COL = "budget_transactions";
 const DEBTS_COL = "budget_debts";
+const INVENTORY_COL = "budget_inventory";
 
 // ── Settings ──────────────────────────────────────────────────────────────────
 
@@ -184,4 +185,37 @@ export async function updateDebt(id: string, updates: Partial<Debt>): Promise<De
 export async function deleteDebt(id: string): Promise<void> {
   const db = await getFirestore();
   await db.collection(DEBTS_COL).doc(id).delete();
+}
+
+// ── Inventory ─────────────────────────────────────────────────────────────────
+
+export async function getInventory(): Promise<InventoryLot[]> {
+  const db = await getFirestore();
+  const snap = await db.collection(INVENTORY_COL).orderBy("createdAt", "desc").get();
+  return snap.docs.map((d: any) => d.data() as InventoryLot);
+}
+
+export async function addInventoryLot(data: Omit<InventoryLot, "id" | "createdAt" | "updatedAt">): Promise<InventoryLot> {
+  const db = await getFirestore();
+  const now = new Date().toISOString();
+  const lot: InventoryLot = { ...data, id: randomUUID(), createdAt: now, updatedAt: now };
+  const clean = Object.fromEntries(Object.entries(lot).filter(([, v]) => v !== undefined));
+  await db.collection(INVENTORY_COL).doc(lot.id).set(clean);
+  return lot;
+}
+
+export async function updateInventoryLot(id: string, updates: Partial<InventoryLot>): Promise<InventoryLot> {
+  const db = await getFirestore();
+  const ref = db.collection(INVENTORY_COL).doc(id);
+  const doc = await ref.get();
+  if (!doc.exists) throw new Error(`Lot ${id} not found`);
+  const updated: InventoryLot = { ...(doc.data() as InventoryLot), ...updates, id, updatedAt: new Date().toISOString() };
+  const clean = Object.fromEntries(Object.entries(updated).filter(([, v]) => v !== undefined));
+  await ref.set(clean);
+  return updated;
+}
+
+export async function deleteInventoryLot(id: string): Promise<void> {
+  const db = await getFirestore();
+  await db.collection(INVENTORY_COL).doc(id).delete();
 }

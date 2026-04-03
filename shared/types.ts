@@ -69,6 +69,39 @@ export const BILL_COLORS = [
   "#8b5cf6", "#ec4899", "#06b6d4", "#f97316",
 ];
 
+export interface InventoryLot {
+  id: string;
+  name: string;
+  sku?: string;
+  category: string;
+  totalUnits: number;
+  unitCost: number;     // what you paid per unit
+  salePrice: number;    // what you charge per unit
+  unitsSold: number;
+  status: "active" | "sold_out" | "archived";
+  receivedAt: string;   // ISO date
+  color: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const INVENTORY_CATEGORIES = [
+  "Supplements",
+  "Apparel",
+  "Equipment",
+  "Digital",
+  "Food & Beverage",
+  "Beauty & Care",
+  "Electronics",
+  "Other",
+] as const;
+
+export const INVENTORY_COLORS = [
+  "#E84500", "#3b82f6", "#22c55e", "#f59e0b",
+  "#8b5cf6", "#06b6d4", "#ec4899", "#64748b",
+];
+
 export interface DashboardData {
   settings: BudgetSettings;
   transactions: Transaction[];
