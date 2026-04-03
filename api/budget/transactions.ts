@@ -18,7 +18,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (req.method === "POST") {
-      const { date, description, amount, category, type, source, merchant, notes, skipBalanceUpdate } =
+      const { date, description, amount, category, type, source, merchant, notes, mode, skipBalanceUpdate } =
         req.body;
 
       if (!date || !description || amount === undefined || !category || !type) {
@@ -36,6 +36,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         category,
         type,
         source: source || "manual",
+        mode: mode || "personal",
         merchant,
         notes,
       }, skipBalanceUpdate === true);
