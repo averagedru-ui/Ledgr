@@ -65,7 +65,7 @@ export default function Budget() {
   const monthEnd = endOfMonth(selectedMonth);
 
   // Filter by area + month
-  const personalTxs = useMemo(() => transactions.filter(t => !t.mode || t.mode === "personal"), [transactions]);
+  const personalTxs = useMemo(() => transactions.filter(t => !t.mode || t.mode === "personal" || t.crossPost === true), [transactions]);
   const businessTxs = useMemo(() => transactions.filter(t => t.mode === "business"), [transactions]);
 
   const monthTxs = useMemo(() => {

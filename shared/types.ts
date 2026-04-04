@@ -7,6 +7,7 @@ export interface Transaction {
   type: "income" | "expense";
   source: "manual" | "n8n"; // how it was added
   mode?: "personal" | "business"; // which area this belongs to
+  crossPost?: boolean; // show on both personal + business (e.g. business expense paid with personal money)
   merchant?: string;
   notes?: string;
   createdAt: string;
